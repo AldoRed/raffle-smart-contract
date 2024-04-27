@@ -33,7 +33,7 @@ const {
               interval = await raffle.getInterval()
           })
 
-          describe("constructor", async function () {
+          describe("constructor", function () {
               it("initializes constructor correctly", async function () {
                   const raffleState = await raffle.getRaffleState()
                   const entraceFee = await raffle.getEntranceFee()
@@ -49,7 +49,7 @@ const {
               })
           })
 
-          describe("enterRaffle", async function () {
+          describe("enterRaffle", function () {
               it("revert when you don't pay enough ETH", async function () {
                   await expect(raffle.enterRaffle()).to.be.rejectedWith(
                       "Raffle__NotEnoughETHEntered",
@@ -75,6 +75,50 @@ const {
                   await expect(
                       raffle.enterRaffle({ value: raffleEntranceFee }),
                   ).to.be.rejectedWith("Raffle__StateNotOpen")
+              })
+          })
+          describe("checkUpkeep", function () {
+              it("returns false if people haven't sent any ETH", async function () {
+                  await network.provider.send("evm_increaseTime", [
+                      Number(interval) + 1,
+                  ])
+                  await network.provider.send("evm_mine", [])
+                  const { upkeepNeeded } =
+                      await raffle.checkUpkeep.staticCall("0x")
+                  assert(!upkeepNeeded)
+              })
+              it("returns false if state is not open", async function () {
+                  await raffle.enterRaffle({ value: raffleEntranceFee })
+                  await network.provider.send("evm_increaseTime", [
+                      Number(interval) + 1,
+                  ])
+                  await network.provider.send("evm_mine", [])
+                  await raffle.performUpkeep("0x")
+                  const raffleState = await raffle.getRaffleState()
+                  const { upkeepNeeded } =
+                      await raffle.checkUpkeep.staticCall("0x")
+                  assert.equal(raffleState.toString(), "1")
+                  assert(!upkeepNeeded)
+              })
+              it("returns false if enough time hasn't passed", async function () {
+                  await raffle.enterRaffle({ value: raffleEntranceFee })
+                  await network.provider.send("evm_increaseTime", [
+                      Number(interval) - 1,
+                  ])
+                  await network.provider.send("evm_mine", [])
+                  const { upkeepNeeded } =
+                      await raffle.checkUpkeep.staticCall("0x")
+                  assert(!upkeepNeeded)
+              })
+              it("returns true if enough time has passed, has players, and state is open", async function () {
+                  await raffle.enterRaffle({ value: raffleEntranceFee })
+                  await network.provider.send("evm_increaseTime", [
+                      Number(interval) + 1,
+                  ])
+                  await network.provider.send("evm_mine", [])
+                  const { upkeepNeeded } =
+                      await raffle.checkUpkeep.staticCall("0x")
+                  assert(upkeepNeeded)
               })
           })
       })
