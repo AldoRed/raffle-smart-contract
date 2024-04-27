@@ -7,7 +7,14 @@ const {
 !developmentChains.includes(network.name)
     ? describe.skip
     : describe("Raffle", function () {
-          let raffle, vrfCoordinatorV2Mock, chai, assert, expect
+          let raffle,
+              vrfCoordinatorV2Mock,
+              chai,
+              assert,
+              expect,
+              raffleEntranceFee,
+              deployer,
+              interval
           const chainId = network.config.chainId
 
           beforeEach(async function () {
@@ -22,12 +29,13 @@ const {
                   "VRFCoordinatorV2Mock",
                   deployer,
               )
+              raffleEntranceFee = await raffle.getEntranceFee()
+              interval = await raffle.getInterval()
           })
 
           describe("constructor", async function () {
-              it("Initializes constructor correctly", async function () {
+              it("initializes constructor correctly", async function () {
                   const raffleState = await raffle.getRaffleState()
-                  const interval = await raffle.getInterval()
                   const entraceFee = await raffle.getEntranceFee()
                   assert.equal(raffleState.toString(), "0")
                   assert.equal(
@@ -42,11 +50,31 @@ const {
           })
 
           describe("enterRaffle", async function () {
-              it("Revert when you don't pay enough ETH", async function () {
-                  //   await expect(raffle.enterRaffle()).to.throw(
-                  //       "Raffle__NotEnoughETHEntered",
-                  //   )
-                  await expect(raffle.enterRaffle()).to.be.reverted
+              it("revert when you don't pay enough ETH", async function () {
+                  await expect(raffle.enterRaffle()).to.be.rejectedWith(
+                      "Raffle__NotEnoughETHEntered",
+                  )
+              })
+              it("records players when they enter", async function () {
+                  await raffle.enterRaffle({ value: raffleEntranceFee })
+                  const playerFromContract = await raffle.getPlayer(0)
+                  assert.equal(playerFromContract, deployer)
+              })
+              it("emits event on enter", async function () {
+                  await expect(
+                      raffle.enterRaffle({ value: raffleEntranceFee }),
+                  ).to.emit(raffle, "RaffleEnter")
+              })
+              it("doesn't allow entrance when raffle is calculating", async function () {
+                  await raffle.enterRaffle({ value: raffleEntranceFee })
+                  await network.provider.send("evm_increaseTime", [
+                      Number(interval) + 1,
+                  ])
+                  await network.provider.send("evm_mine", [])
+                  await raffle.performUpkeep("0x")
+                  await expect(
+                      raffle.enterRaffle({ value: raffleEntranceFee }),
+                  ).to.be.rejectedWith("Raffle__StateNotOpen")
               })
           })
       })

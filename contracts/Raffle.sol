@@ -8,9 +8,8 @@
 pragma solidity ^0.8.24;
 
 import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/mocks/VRFCoordinatorV2Mock.sol";
-import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
-import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
-import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/interfaces/AutomationCompatibleInterface.sol";
+import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import {KeeperCompatibleInterface} from "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
 import "hardhat/console.sol";
 
 error Raffle__NotEnoughETHEntered();
@@ -28,7 +27,7 @@ error Raffle__UpKeepNotNeeded(
  * @notice This contract is to creating an untamporable descentralized smart contract
  * @dev This implements Chainlink VRF v2 and Chainlink Keepers
  */
-contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
+contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     // Type declaration
     enum RaffleState {
         OPEN,
@@ -116,6 +115,9 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     function performUpkeep(bytes calldata /* performData */) external override {
         (bool upkeepNeeded, ) = checkUpkeep("");
         if (!upkeepNeeded) {
+            console.log(
+                "------------------- Reverted Raffle__UpKeepNotNeeded -------------------"
+            );
             revert Raffle__UpKeepNotNeeded(
                 address(this).balance,
                 s_players.length,
