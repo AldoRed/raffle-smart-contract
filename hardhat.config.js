@@ -35,6 +35,9 @@ module.exports = {
             chainId: 31337,
         },
     },
+    etherscan: {
+        apiKey: ETHERSCAN_API_KEY,
+    },
     solidity: "0.8.24",
     gasReporter: {
         enabled: false,
