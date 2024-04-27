@@ -121,4 +121,36 @@ const {
                   assert(upkeepNeeded)
               })
           })
+          describe("performUpkeep", function () {
+              it("revert if upKeepNeeded is false", async function () {
+                  const { upkeepNeeded } =
+                      await raffle.checkUpkeep.staticCall("0x")
+                  assert(!upkeepNeeded)
+                  await expect(raffle.performUpkeep("0x")).to.be.rejectedWith(
+                      "Raffle__UpKeepNotNeeded",
+                  )
+              })
+              it("it can only run if upKeepNeeded is true", async function () {
+                  await raffle.enterRaffle({ value: raffleEntranceFee })
+                  await network.provider.send("evm_increaseTime", [
+                      Number(interval) + 1,
+                  ])
+                  await network.provider.send("evm_mine", [])
+                  const tx = await raffle.performUpkeep("0x")
+                  assert(tx)
+              })
+              it("updates the raffle state, emits an event and calls the vrf Coordinator", async function () {
+                  await raffle.enterRaffle({ value: raffleEntranceFee })
+                  await network.provider.send("evm_increaseTime", [
+                      Number(interval) + 1,
+                  ])
+                  await network.provider.send("evm_mine", [])
+                  const txResponse = await raffle.performUpkeep("0x")
+                  const txReceipt = await txResponse.wait(1)
+                  const requestId = txReceipt.logs[1].args[0]
+                  const raffleState = await raffle.getRaffleState()
+                  assert(Number(requestId) > 0)
+                  assert.equal(raffleState, "1")
+              })
+          })
       })
