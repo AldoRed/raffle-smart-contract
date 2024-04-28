@@ -11,20 +11,14 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     let vrfCoordinatorV2Address, subscriptionId
 
     if (developmentChains.includes(network.name)) {
-        const VRFCoordinatorV2Mock = await ethers.getContract(
-            "VRFCoordinatorV2Mock",
-        )
+        const VRFCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
         vrfCoordinatorV2Address = VRFCoordinatorV2Mock.target
-        const transactionResponse =
-            await VRFCoordinatorV2Mock.createSubscription()
+        const transactionResponse = await VRFCoordinatorV2Mock.createSubscription()
         const transactionReceipt = await transactionResponse.wait(1)
 
         subscriptionId = transactionReceipt.logs[0].args[0]
 
-        await VRFCoordinatorV2Mock.fundSubscription(
-            subscriptionId,
-            VRF_SUBS_FUND_SUBSCRIPTION,
-        )
+        await VRFCoordinatorV2Mock.fundSubscription(subscriptionId, VRF_SUBS_FUND_SUBSCRIPTION)
     } else {
         vrfCoordinatorV2Address = networkConfig[chainId]["vrfCoordinatorV2"]
         subscriptionId = networkConfig[chainId]["subscriptionId"]
@@ -35,14 +29,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     const callbackGasLimit = networkConfig[chainId]["callbackGasLimit"]
     const interval = networkConfig[chainId]["interval"]
 
-    const args = [
-        vrfCoordinatorV2Address,
-        entranceFee,
-        gasLane,
-        subscriptionId,
-        callbackGasLimit,
-        interval,
-    ]
+    const args = [vrfCoordinatorV2Address, entranceFee, gasLane, subscriptionId, callbackGasLimit, interval]
     const raffle = await deploy("Raffle", {
         from: deployer,
         args: args,
@@ -50,10 +37,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         waitConfirmations: network.config.blockConfirmations || 1,
     })
 
-    if (
-        !developmentChains.includes(network.name) &&
-        process.env.ETHERSCAN_API_KEY
-    ) {
+    if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
         //Verify
         await verify(raffle.address, args)
     }

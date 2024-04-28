@@ -1,8 +1,5 @@
 const { network, getNamedAccounts, deployments, ethers } = require("hardhat")
-const {
-    developmentChains,
-    networkConfig,
-} = require("../../helper-hardhat-config")
+const { developmentChains, networkConfig } = require("../../helper-hardhat-config")
 const { assert, expect } = require("chai")
 
 developmentChains.includes(network.name)
@@ -26,15 +23,10 @@ developmentChains.includes(network.name)
                       raffle.once("WinnerPicked", async () => {
                           console.log("WinnerPicked event fired!")
                           try {
-                              const recentWinner =
-                                  await raffle.getRecentWinner()
+                              const recentWinner = await raffle.getRecentWinner()
                               const raffleState = await raffle.getRaffleState()
-                              const winnerEndingBalance =
-                                  await ethers.provider.getBalance(
-                                      accounts[0].address
-                                  )
-                              const endingTimeStamp =
-                                  await raffle.getLatestTimestamp()
+                              const winnerEndingBalance = await ethers.provider.getBalance(accounts[0].address)
+                              const endingTimeStamp = await raffle.getLatestTimestamp()
 
                               await expect(raffle.getPlayer(0)).to.be.reverted
                               assert.equal(recentWinner, accounts[0].address)
@@ -45,9 +37,7 @@ developmentChains.includes(network.name)
                               //           Number(raffleEntranceFee) -
                               //           10103649821913220
                               //   ) check why it doesn't work
-                              expect(Number(endingTimeStamp)).to.be.greaterThan(
-                                  Number(startingTimeStamp)
-                              )
+                              expect(Number(endingTimeStamp)).to.be.greaterThan(Number(startingTimeStamp))
                               resolve()
                           } catch (error) {
                               console.log(error)
@@ -56,8 +46,7 @@ developmentChains.includes(network.name)
                       })
 
                       await raffle.enterRaffle({ value: raffleEntranceFee })
-                      const winnerStartingBalance =
-                          await ethers.provider.getBalance(accounts[0].address)
+                      const winnerStartingBalance = await ethers.provider.getBalance(accounts[0].address)
                   })
               })
           })

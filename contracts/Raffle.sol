@@ -15,11 +15,7 @@ import "hardhat/console.sol";
 error Raffle__NotEnoughETHEntered();
 error Raffle__TransferFailed();
 error Raffle__StateNotOpen();
-error Raffle__UpKeepNotNeeded(
-    uint256 currentBalacne,
-    uint256 numPlayers,
-    uint256 raffleState
-);
+error Raffle__UpKeepNotNeeded(uint256 currentBalacne, uint256 numPlayers, uint256 raffleState);
 
 /**
  * @title A sample Raffle Contract
@@ -75,9 +71,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
 
     function enterRaffle() public payable {
         if (msg.value < i_entranceFee) {
-            console.log(
-                "------------------- Reverted Raffle__NotEnoughETHEntered -------------------"
-            );
+            console.log("------------------- Reverted Raffle__NotEnoughETHEntered -------------------");
             revert Raffle__NotEnoughETHEntered();
         }
         if (s_raffleState != RaffleState.OPEN) {
@@ -100,11 +94,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
      */
     function checkUpkeep(
         bytes memory /*checkData*/
-    )
-        public
-        override
-        returns (bool upkeepNeeded, bytes memory /* performData */)
-    {
+    ) public override returns (bool upkeepNeeded, bytes memory /* performData */) {
         bool isOpen = (s_raffleState == RaffleState.OPEN);
         bool timePassed = ((block.timestamp - s_lastTimeStamp) > i_interval);
         bool hasPlayers = (s_players.length > 0);
@@ -115,14 +105,8 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     function performUpkeep(bytes calldata /* performData */) external override {
         (bool upkeepNeeded, ) = checkUpkeep("");
         if (!upkeepNeeded) {
-            console.log(
-                "------------------- Reverted Raffle__UpKeepNotNeeded -------------------"
-            );
-            revert Raffle__UpKeepNotNeeded(
-                address(this).balance,
-                s_players.length,
-                uint256(s_raffleState)
-            );
+            console.log("------------------- Reverted Raffle__UpKeepNotNeeded -------------------");
+            revert Raffle__UpKeepNotNeeded(address(this).balance, s_players.length, uint256(s_raffleState));
         }
         s_raffleState = RaffleState.CALCULATING;
         uint256 requestId = i_vrfCoodinator.requestRandomWords(
@@ -135,10 +119,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         emit RequestedRaffleWinner(requestId);
     }
 
-    function fulfillRandomWords(
-        uint256 /* _requestId */,
-        uint256[] memory _randomWords
-    ) internal override {
+    function fulfillRandomWords(uint256 /* _requestId */, uint256[] memory _randomWords) internal override {
         uint256 indexOfWinner = _randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
