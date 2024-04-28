@@ -27,7 +27,7 @@ const {
               raffle = await ethers.getContract("Raffle", deployer)
               vrfCoordinatorV2Mock = await ethers.getContract(
                   "VRFCoordinatorV2Mock",
-                  deployer,
+                  deployer
               )
               raffleEntranceFee = await raffle.getEntranceFee()
               interval = await raffle.getInterval()
@@ -40,11 +40,11 @@ const {
                   assert.equal(raffleState.toString(), "0")
                   assert.equal(
                       interval.toString(),
-                      networkConfig[chainId].interval,
+                      networkConfig[chainId].interval
                   )
                   assert.equal(
                       entraceFee.toString(),
-                      networkConfig[chainId].entranceFee,
+                      networkConfig[chainId].entranceFee
                   )
               })
           })
@@ -52,7 +52,7 @@ const {
           describe("enterRaffle", function () {
               it("revert when you don't pay enough ETH", async function () {
                   await expect(raffle.enterRaffle()).to.be.rejectedWith(
-                      "Raffle__NotEnoughETHEntered",
+                      "Raffle__NotEnoughETHEntered"
                   )
               })
               it("records players when they enter", async function () {
@@ -62,7 +62,7 @@ const {
               })
               it("emits event on enter", async function () {
                   await expect(
-                      raffle.enterRaffle({ value: raffleEntranceFee }),
+                      raffle.enterRaffle({ value: raffleEntranceFee })
                   ).to.emit(raffle, "RaffleEnter")
               })
               it("doesn't allow entrance when raffle is calculating", async function () {
@@ -73,7 +73,7 @@ const {
                   await network.provider.send("evm_mine", [])
                   await raffle.performUpkeep("0x")
                   await expect(
-                      raffle.enterRaffle({ value: raffleEntranceFee }),
+                      raffle.enterRaffle({ value: raffleEntranceFee })
                   ).to.be.rejectedWith("Raffle__StateNotOpen")
               })
           })
@@ -83,8 +83,9 @@ const {
                       Number(interval) + 1,
                   ])
                   await network.provider.send("evm_mine", [])
-                  const { upkeepNeeded } =
-                      await raffle.checkUpkeep.staticCall("0x")
+                  const { upkeepNeeded } = await raffle.checkUpkeep.staticCall(
+                      "0x"
+                  )
                   assert(!upkeepNeeded)
               })
               it("returns false if state is not open", async function () {
@@ -95,8 +96,9 @@ const {
                   await network.provider.send("evm_mine", [])
                   await raffle.performUpkeep("0x")
                   const raffleState = await raffle.getRaffleState()
-                  const { upkeepNeeded } =
-                      await raffle.checkUpkeep.staticCall("0x")
+                  const { upkeepNeeded } = await raffle.checkUpkeep.staticCall(
+                      "0x"
+                  )
                   assert.equal(raffleState.toString(), "1")
                   assert(!upkeepNeeded)
               })
@@ -106,8 +108,9 @@ const {
                       Number(interval) - 1,
                   ])
                   await network.provider.send("evm_mine", [])
-                  const { upkeepNeeded } =
-                      await raffle.checkUpkeep.staticCall("0x")
+                  const { upkeepNeeded } = await raffle.checkUpkeep.staticCall(
+                      "0x"
+                  )
                   assert(!upkeepNeeded)
               })
               it("returns true if enough time has passed, has players, and state is open", async function () {
@@ -116,18 +119,20 @@ const {
                       Number(interval) + 1,
                   ])
                   await network.provider.send("evm_mine", [])
-                  const { upkeepNeeded } =
-                      await raffle.checkUpkeep.staticCall("0x")
+                  const { upkeepNeeded } = await raffle.checkUpkeep.staticCall(
+                      "0x"
+                  )
                   assert(upkeepNeeded)
               })
           })
           describe("performUpkeep", function () {
               it("revert if upKeepNeeded is false", async function () {
-                  const { upkeepNeeded } =
-                      await raffle.checkUpkeep.staticCall("0x")
+                  const { upkeepNeeded } = await raffle.checkUpkeep.staticCall(
+                      "0x"
+                  )
                   assert(!upkeepNeeded)
                   await expect(raffle.performUpkeep("0x")).to.be.rejectedWith(
-                      "Raffle__UpKeepNotNeeded",
+                      "Raffle__UpKeepNotNeeded"
                   )
               })
               it("it can only run if upKeepNeeded is true", async function () {
@@ -163,10 +168,10 @@ const {
               })
               it("can only be called after performUpKeep", async function () {
                   await expect(
-                      vrfCoordinatorV2Mock.fulfillRandomWords(0, raffle.target),
+                      vrfCoordinatorV2Mock.fulfillRandomWords(0, raffle.target)
                   ).to.be.rejectedWith("nonexistent request")
                   await expect(
-                      vrfCoordinatorV2Mock.fulfillRandomWords(1, raffle.target),
+                      vrfCoordinatorV2Mock.fulfillRandomWords(1, raffle.target)
                   ).to.be.rejectedWith("nonexistent request")
               })
               it("picks a winner, resets the lottery, and sends money", async function () {
@@ -199,22 +204,20 @@ const {
                                   await raffle.getLatestTimestamp()
                               const winnerEndingBalance =
                                   await ethers.provider.getBalance(
-                                      accounts[1].address,
+                                      accounts[1].address
                                   )
 
                               assert.equal(numPlayers.toString(), 0)
                               assert.equal(raffleState.toString(), "0")
                               expect(Number(endingTimeStamp)).to.be.greaterThan(
-                                  Number(startingTimeStamp),
+                                  Number(startingTimeStamp)
                               )
                               assert.equal(
-                                  Number(winnerEndingBalance).toString(),
-                                  (
-                                      Number(winnerStartingBalance) +
+                                  Number(winnerEndingBalance),
+                                  Number(winnerStartingBalance) +
                                       Number(raffleEntranceFee) *
                                           Number(aditionalsEntrants) +
                                       Number(raffleEntranceFee)
-                                  ).toString(),
                               )
                           } catch (error) {
                               reject(error)
@@ -229,7 +232,7 @@ const {
                           await ethers.provider.getBalance(accounts[1].address)
                       await vrfCoordinatorV2Mock.fulfillRandomWords(
                           txReceipt.logs[1].args[0],
-                          raffle.target,
+                          raffle.target
                       )
                   })
               })
