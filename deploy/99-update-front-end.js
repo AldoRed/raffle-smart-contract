@@ -24,7 +24,7 @@ async function updateContractAddresses() {
     const currentAddresses = JSON.parse(fs.readFileSync(FRONT_END_ADDRESSES_FILE, "utf8"))
     if (chainId in currentAddresses) {
         if (!currentAddresses[chainId].includes(raffle.target)) {
-            currentAddresses[chainId].push(raffle.target)
+            currentAddresses[chainId][0] = raffle.target
         }
     } else {
         currentAddresses[chainId] = [raffle.target]
